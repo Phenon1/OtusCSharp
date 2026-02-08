@@ -22,4 +22,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\OtusCSharpHW3\OtusCSharpHW3.csproj" />
+  </ItemGroup>
+
 </Project>
