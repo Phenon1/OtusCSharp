@@ -30,6 +30,11 @@ namespace OtusCSharpHW3
         public ReadOnlySpan<char> Command { init; get; }
         public ReadOnlySpan<char> Key { init; get; }
         public ReadOnlySpan<char> Value { init; get; }
+
+        public void Print()
+        {
+            Console.WriteLine($"Command:{Command.ToString()} Key:{Key.ToString()} Value:{Value.ToString()}");
+        }
     }
 
     public static class CommandParser
@@ -107,6 +112,7 @@ namespace OtusCSharpHW3
             simple.Get("xz");
             ReadOnlySpan<char> span = "GET user:1".AsSpan();
             var commandKeyValue = CommandParser.Parse(span);
+
         }
     }
 }
