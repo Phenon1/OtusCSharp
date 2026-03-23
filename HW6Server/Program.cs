@@ -3,12 +3,13 @@ using System.Net.Sockets;
 using System.Text;
 using System.Buffers;
 using OtusCSharpHW3;
+using System;
 
 namespace HW6Server
 {
     public class TcpServer
     {
-        public async void StartAcync(byte[] bAddress,int port)
+        public async Task StartAsync(byte[] bAddress,int port)
         {
             IPAddress address = new IPAddress(bAddress);
             IPEndPoint ipPoint = new IPEndPoint(address, port);
@@ -21,41 +22,29 @@ namespace HW6Server
             {
                 // получаем входящее подключение
                 Socket client = await socket.AcceptAsync();
-                ProcessClientAsync(client);
+                await ProcessClientAsync(client);
                 // получаем адрес клиента
                 Console.WriteLine($"Адрес подключенного клиента: {client.RemoteEndPoint}");
             }    
             
         }
-        private async void ProcessClientAsync(Socket client)
+        private async Task ProcessClientAsync(Socket client)
         {
-            var pool = ArrayPool<char>.Shared;
-            char[] buffer = pool.Rent(512);
+            var pool = ArrayPool<byte>.Shared;
+            byte[] buffer = pool.Rent(1024);
 
             try
             {
-                Memory <char>  mem = new Memory<char>(buffer);
-                byte[] receive = new byte[1];
-                ushort count=0;
-                char symb;
-
                 while ( true )
                 {
-                    int received = await client.ReceiveAsync(receive, SocketFlags.None);
+                    int received = await client.ReceiveAsync(buffer, SocketFlags.None);
                     if ( received == 0 ) // клиент закрыл соединение
                         break;
 
-                    symb = (char)receive[0];
+                    ReadOnlySpan<char> span = Encoding.UTF8.GetString(buffer, 0, received);
+                    CommandParser.Parse(span).Print();
 
-                    if (symb == '\n')
-                    {
 
-                        CommandParser.Parse(mem.Span[..--count]).Print();
-                        count=0;
-                    }
-                    else    
-                        mem.Span[count++] = symb;
-                    
                 }
             }
             catch ( SocketException ex )
@@ -76,12 +65,15 @@ namespace HW6Server
             }
         }
     }
+
     internal class Program
     {
         static void Main(string[] args)
         {
             TcpServer server = new TcpServer();
-            server.StartAcync(new byte[] { 127, 0, 0, 1 }, 8888);
+            _ = server.StartAsync(new byte[] { 127, 0, 0, 1 }, 8888);
+
+
             Console.ReadLine();
         }
     }
