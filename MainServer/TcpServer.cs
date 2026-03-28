@@ -1,10 +1,11 @@
-﻿using System;
+﻿using OtusCSharpModels;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using OtusCSharpHW3;
+using System.Text.Json;
 
 namespace MainServer
 {
@@ -72,17 +73,17 @@ namespace MainServer
                     switch (command.Command.ToString().ToUpper())
                     {
                         case nameof(AvCommands.SET):
-                            _store.Set(command.Key.ToString(), Encoding.UTF8.GetBytes(command.Value.ToArray()));
+                            _store.Set(command.Key.ToString(), JsonSerializer.Deserialize<UserProfile>(command.Value));
                             await SendMessageWithEndLineAsync(OK, client);
                             break;
 
                         case nameof(AvCommands.GET):
-                            var val = _store.Get(command.Key.ToString());
+                            UserProfile? val = _store.Get(command.Key.ToString());
 
                             if (val == null)
                                 await SendMessageWithEndLineAsync(Nil,client);
                             else
-                                await client.SendAsync(val);
+                                await client.SendAsync(JsonSerializer.SerializeToUtf8Bytes(val));
                             break;
 
                         case nameof(AvCommands.DELETE):

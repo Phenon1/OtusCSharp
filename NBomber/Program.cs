@@ -2,8 +2,10 @@
 using NBomber.Contracts;
 using NBomber.CSharp;
 using NBomberTest;
+using OtusCSharpModels;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Text.Unicode;
 
 namespace NBomber
@@ -26,19 +28,25 @@ namespace NBomber
             var scenario = Scenario.Create("TcpServer bomb scenario", async context =>
             {
                 string name = context.Random.GetString(['a', 'b', 'c', 'd', 'e', 'f', 'g','h','i','j'], 5);
-                string message = context.Random.GetString(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'], 20);
+                int id = context.Random.Next();
+
+                UserProfile userProfile = new UserProfile(name);
+                userProfile.CreatedOn = DateTime.Now;
+                userProfile.Id = id;
 
                 var step1 = await Step.Run("GetBytes", context, async () =>
                 {
-                    var bytes = Encoding.UTF8.GetBytes(message);
+                    var bytes = JsonSerializer.SerializeToUtf8Bytes(userProfile);
+
                     using TcpBombClient client = new TcpBombClient();
                     CancellationTokenSource tokenSource = new CancellationTokenSource();
 
                     await client.ConnectAsync("127.0.0.1", 8888, tokenSource.Token);
                     await client.SetAsync(name, bytes);
                     bytes = await client.GetAsync(name);
+                    UserProfile? userProfileRet = JsonSerializer.Deserialize<UserProfile>(bytes);
 
-                    if (message == Encoding.UTF8.GetString(bytes))
+                    if (userProfileRet != null && userProfile.Id == userProfileRet.Id)
                         return Response.Ok();
                     else
                         return Response.Fail();

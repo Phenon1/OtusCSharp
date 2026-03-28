@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OtusCSharpHW3\OtusCSharpHW3.csproj" />
+    <ProjectReference Include="..\OtusCSharpHW3\OtusCSharpModels.csproj" />
   </ItemGroup>
 
 </Project>

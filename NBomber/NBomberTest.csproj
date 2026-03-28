@@ -11,4 +11,8 @@
     <PackageReference Include="NBomber" Version="6.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\OtusCSharpHW3\OtusCSharpModels.csproj" />
+  </ItemGroup>
+
 </Project>
