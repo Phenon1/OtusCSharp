@@ -21,6 +21,10 @@ namespace MainServer
             GET,SET,DELETE
         }
 
+        const string OK = "OK";
+        const string Nil = "(nil)";
+        const string ErrorUnknownCommand = "-ERR Unknown command";
+
         public async Task StartAsync(byte[] bAddress, int port)
         {
             IPAddress address = new IPAddress(bAddress);
@@ -34,16 +38,16 @@ namespace MainServer
             {
                 // получаем входящее подключение
                 Socket client = await socket.AcceptAsync();
-                await ProcessClientAsync(client);
+                _ = Task.Run(() => ProcessClientAsync(client)); 
                 // получаем адрес клиента
                 Console.WriteLine($"Адрес подключенного клиента: {client.RemoteEndPoint}");
             }
 
         }
 
-        private async Task SendMessageAsync(string message, Socket socket)
+        private async Task SendMessageWithEndLineAsync(string message, Socket socket)
         {
-            await socket.SendAsync(Encoding.UTF8.GetBytes(message));
+            await socket.SendAsync(Encoding.UTF8.GetBytes(message+ "\r\n"));
         }
         private async Task ProcessClientAsync(Socket client)
         {
@@ -58,7 +62,7 @@ namespace MainServer
                     if (received == 0) // клиент закрыл соединение
                         break;
                     
-                    ReadOnlySpan<char> span = Encoding.UTF8.GetString(buffer, 0, received);
+                    ReadOnlySpan<char> span = Encoding.UTF8.GetChars(buffer, 0, received);
                     
                     CommandKeyValue command;
 
@@ -69,25 +73,25 @@ namespace MainServer
                     {
                         case nameof(AvCommands.SET):
                             _store.Set(command.Key.ToString(), Encoding.UTF8.GetBytes(command.Value.ToArray()));
-                            await SendMessageAsync("OK\r\n", client);
+                            await SendMessageWithEndLineAsync(OK, client);
                             break;
 
                         case nameof(AvCommands.GET):
                             var val = _store.Get(command.Key.ToString());
 
                             if (val == null)
-                                await SendMessageAsync("(nil)\r\n",client);
+                                await SendMessageWithEndLineAsync(Nil,client);
                             else
                                 await client.SendAsync(val);
                             break;
 
                         case nameof(AvCommands.DELETE):
                             _store.Delete(command.Key.ToString());
-                            await SendMessageAsync("OK\r\n", client);
+                            await SendMessageWithEndLineAsync(OK, client);
                             break;
 
                         default:
-                            await SendMessageAsync("-ERR Unknown command\r\n", client);
+                            await SendMessageWithEndLineAsync(ErrorUnknownCommand, client);
                             break;
                     }
 

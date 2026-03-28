@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HW6Client", "HW6Client\HW6C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MainServer", "MainServer\MainServer.csproj", "{2341597B-0489-4BD1-86E1-B3F8D2B1DA80}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NBomberTest", "NBomber\NBomberTest.csproj", "{7BE28758-FB4A-4584-982B-B9DE70DF5EB5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{2341597B-0489-4BD1-86E1-B3F8D2B1DA80}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2341597B-0489-4BD1-86E1-B3F8D2B1DA80}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2341597B-0489-4BD1-86E1-B3F8D2B1DA80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BE28758-FB4A-4584-982B-B9DE70DF5EB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BE28758-FB4A-4584-982B-B9DE70DF5EB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BE28758-FB4A-4584-982B-B9DE70DF5EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BE28758-FB4A-4584-982B-B9DE70DF5EB5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
