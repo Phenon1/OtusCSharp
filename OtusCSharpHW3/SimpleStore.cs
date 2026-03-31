@@ -41,7 +41,11 @@ namespace OtusCSharpModels
             try
             {
                 _store.TryGetValue(key, out var value);
-                return JsonSerializer.Deserialize<UserProfile>(value);
+
+                if (value == null)
+                    return null;
+                else
+                    return JsonSerializer.Deserialize<UserProfile>(value);
             }
             finally
             {
