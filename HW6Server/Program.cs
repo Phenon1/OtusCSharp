@@ -2,8 +2,8 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Buffers;
-using OtusCSharpHW3;
 using System;
+using OtusCSharpModels;
 
 namespace HW6Server
 {

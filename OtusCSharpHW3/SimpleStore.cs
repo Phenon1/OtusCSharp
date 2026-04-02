@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace OtusCSharpHW3
+namespace OtusCSharpModels
 {
     public class SimpleStore : IDisposable
     {
@@ -21,12 +22,12 @@ namespace OtusCSharpHW3
         {
             return (_setCount, _getCount, _deleteCount);
         }
-        public void Set(string key, byte[] value)
+        public void Set(string key, UserProfile? profile)
         {
             _lock.EnterWriteLock();
             try
             {
-                _store[key] = value;
+                _store[key] = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(profile);
             }
             finally
             {
@@ -34,13 +35,17 @@ namespace OtusCSharpHW3
                 _lock.ExitWriteLock();
             }
         }
-        public byte[] Get(string key)
+        public UserProfile? Get(string key)
         {
             _lock.EnterReadLock();
             try
             {
                 _store.TryGetValue(key, out var value);
-                return value;
+
+                if (value == null)
+                    return null;
+                else
+                    return JsonSerializer.Deserialize<UserProfile>(value);
             }
             finally
             {

@@ -1,5 +1,5 @@
 namespace Tests;
-using OtusCSharpHW3;
+using OtusCSharpModels;
 
 public class HW3Tests
 {
@@ -25,7 +25,7 @@ public class HW3Tests
     [InlineData("GET  ")]
     public void CommandParserExceptionTest(string fullCommand)
     {
-        Assert.Throws<OtusCSharpHW3.ComandException>(() => CommandParser.Parse(fullCommand.AsSpan()));
+        Assert.Throws<OtusCSharpModels.ComandException>(() => CommandParser.Parse(fullCommand.AsSpan()));
        
     }
 }

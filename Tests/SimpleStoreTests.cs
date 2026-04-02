@@ -1,44 +1,49 @@
 ﻿namespace Tests;
-using OtusCSharpHW3;
+using OtusCSharpModels;
 
 public class SimpleStoreTests
 {
     [Fact]
     public void MultiTaskTest()
     {
+        UserProfile test1 =  new UserProfile("test1Name");
+        test1.CreatedOn = DateTime.Now;
+        test1.Id = 1;
+        UserProfile test2 = new UserProfile("test2Name");
+
         using SimpleStore simpleStore = new SimpleStore();
         Task task1 = Task.Run(() =>
         {
-            simpleStore.Set("3", new byte[2] { 0, 1 });
+            simpleStore.Set("3", test1);
             simpleStore.Get("1");
         });
 
         Task task2 = Task.Run(() =>
         {
-            simpleStore.Set("2", new byte[1] { 4 });
+            simpleStore.Set("2", test2);
             simpleStore.Get("1");
             simpleStore.Delete("1");
         });
 
         Task task3 = Task.Run(() =>
         {
-            simpleStore.Set("1", new byte[2] { 0, 1 });
+            simpleStore.Set("1", test1);
 
-            var bytes = simpleStore.Get("1");
+            var profile = simpleStore.Get("1");
            
-            Assert.NotNull(bytes);
-            Assert.Equal(1, bytes[1]);
+            Assert.NotNull(profile);
+            Assert.Equal(test1.Username, profile.Username);
 
             simpleStore.Delete("1");
-            bytes = simpleStore.Get("1");
-            Assert.Null(bytes);
+            profile = simpleStore.Get("1");
+            Assert.Null(profile);
 
             simpleStore.Delete("3");
         });
 
         Task task4 = Task.Run(() =>
         {
-            simpleStore.Set("3", new byte[2] { 1, 0 });
+            simpleStore.Set("3", test2);
             simpleStore.Get("3");
             
         });

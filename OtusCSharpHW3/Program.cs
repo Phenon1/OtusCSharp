@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace OtusCSharpHW3
+namespace OtusCSharpModels  
 {
  
 
