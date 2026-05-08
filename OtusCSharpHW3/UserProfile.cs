@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,8 @@ using System.Threading.Tasks;
 
 namespace OtusCSharpModels
 {
-    public class UserProfile
+    [GenerateBinarySerializer]
+    public partial class UserProfile
     {
         public int Id { get; set; }
         public string Username { get; set; }
