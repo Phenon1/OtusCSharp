@@ -1,16 +1,27 @@
-﻿using System.Net;
+﻿using Microsoft.Extensions.Configuration;
+using OtusCSharpModels;
+using System;
+using System.Buffers;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Buffers;
-using System;
-using OtusCSharpModels;
 
 namespace HW6Server
 {
     public class TcpServer
     {
+        int maxSizeMessageByte;
+        uint maxCountConnect;
         public async Task StartAsync(byte[] bAddress,int port)
         {
+            IConfiguration config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
+
+            maxSizeMessageByte = config.GetValue<int>("IncomeMessageSettings:SizeByte");
+            maxCountConnect = config.GetValue<uint>("IncomeMessageSettings:MaxCountConnect");
+
             IPAddress address = new IPAddress(bAddress);
             IPEndPoint ipPoint = new IPEndPoint(address, port);
             using Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -31,13 +42,14 @@ namespace HW6Server
         private async Task ProcessClientAsync(Socket client)
         {
             var pool = ArrayPool<byte>.Shared;
-            byte[] buffer = pool.Rent(1024);
+            byte[] buffer = pool.Rent(maxSizeMessageByte);
 
             try
             {
                 while ( true )
                 {
                     int received = await client.ReceiveAsync(buffer, SocketFlags.None);
+                    
                     if ( received == 0 ) // клиент закрыл соединение
                         break;
 
