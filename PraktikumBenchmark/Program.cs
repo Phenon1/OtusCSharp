@@ -3,7 +3,7 @@ using BenchmarkDotNet.Running;
 
 namespace PraktikumBenchmark
 {
-    [MemoryDiagnoser]
+    [MemoryDiagnoser] 
     public class SumBench
     {
         private int[] data = Enumerable.Range(1, 1000).ToArray();

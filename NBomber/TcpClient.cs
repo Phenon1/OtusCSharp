@@ -29,7 +29,7 @@ namespace NBomberTest
             await _lock.WaitAsync();
             try
             {
-                byte[] data = Encoding.UTF8.GetBytes("SET " + message + " ");
+                byte[] data = Encoding.UTF8.GetBytes(message);
                 byte[] combined = new byte[data.Length + value.Length];
                 Buffer.BlockCopy(data, 0, combined, 0, data.Length);
                 Buffer.BlockCopy(value, 0, combined, data.Length, value.Length);

@@ -206,7 +206,7 @@ namespace GenerateBinarySerializer
                     sb.AppendLine("            }");
                     break;
 
-                case "System.DateTime":
+                case "dateTime":
                     sb.Append("            writer.Write(this.")
                       .Append(prop.Name)
                       .Append(".Ticks);")
