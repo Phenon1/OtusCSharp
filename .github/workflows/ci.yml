@@ -30,9 +30,9 @@ jobs:
         run: dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
 
       - name: ReportGenerator
-        uses: danielpalme/ReportGenerator-action@5.2.0
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.4.11  # Используйте актуальное имя и версию
         with:
-          signals: './coverage/**/coverage.cobertura.xml'
+          reports: './coverage/**/coverage.cobertura.xml'      # Обратите внимание: параметр называется reports, а не signals
           targetdir: 'coveragereport'
           reporttypes: 'MarkdownSummary;Badges'
 
