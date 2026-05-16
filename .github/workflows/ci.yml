@@ -25,3 +25,16 @@ jobs:
 
       - name: Test
         run: dotnet test OtusCSharp.sln --configuration Release --no-build --verbosity normal
+
+      - name: Test & Collect Coverage
+        run: dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      - name: ReportGenerator
+        uses: danielpalme/ReportGenerator-action@5.2.0
+        with:
+          signals: './coverage/**/coverage.cobertura.xml'
+          targetdir: 'coveragereport'
+          reporttypes: 'MarkdownSummary;Badges'
+
+      - name: Write to Job Summary
+        run: cat coveragereport/Summary.md >> $GITHUB_STEP_SUMMARY
