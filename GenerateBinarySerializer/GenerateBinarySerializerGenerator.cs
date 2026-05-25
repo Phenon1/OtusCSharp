@@ -159,6 +159,40 @@ namespace GenerateBinarySerializer
 
             sb.AppendLine("        }");
             sb.AppendLine("    }");
+            sb.AppendLine();
+
+            sb.AppendLine("    public byte[] SerializeToBinary()");
+            sb.AppendLine("    {");
+            sb.AppendLine("        using var stream = new MemoryStream();");
+            sb.AppendLine("        SerializeToBinary(stream);");
+            sb.AppendLine("        return stream.ToArray();");
+            sb.AppendLine("    }");
+            sb.AppendLine();
+
+            // --- МЕТОД ДЕСЕРИАЛИЗАЦИИ ---
+            sb.Append("    public static ").Append(type.TypeName).AppendLine(" DeserializeFromBinary(ReadOnlySpan<byte> span)");
+            sb.AppendLine("    {");
+            sb.AppendLine("        using var stream = new MemoryStream(span.ToArray(), writable: false);");
+            sb.AppendLine("        return DeserializeFromBinary(stream);");
+            sb.AppendLine("    }");
+            sb.AppendLine();
+
+
+            sb.Append("    public static ").Append(type.TypeName).AppendLine(" DeserializeFromBinary(Stream stream)");
+            sb.AppendLine("    {");
+            sb.Append("        var instance = (").Append(type.TypeName).Append(")System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(").Append(type.TypeName).AppendLine("));");
+            sb.AppendLine();
+            sb.AppendLine("        using (var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true))");
+            sb.AppendLine("        {");
+
+            foreach (var prop in type.Properties)
+            {
+                AppendReadForProperty(sb, prop);
+            }
+
+            sb.AppendLine("        }");
+            sb.AppendLine("        return instance;");
+            sb.AppendLine("    }");
             sb.AppendLine("}");
 
             return sb.ToString();
@@ -221,6 +255,51 @@ namespace GenerateBinarySerializer
             }
         }
 
-       
+        private static void AppendReadForProperty(StringBuilder sb, SerializableProperty prop)
+        {
+            switch (prop.TypeName)
+            {
+                case "int":
+                    sb.Append("            instance.").Append(prop.Name).AppendLine(" = reader.ReadInt32();");
+                    break;
+
+                case "long":
+                    sb.Append("            instance.").Append(prop.Name).AppendLine(" = reader.ReadInt64();");
+                    break;
+
+                case "double":
+                    sb.Append("            instance.").Append(prop.Name).AppendLine(" = reader.ReadDouble();");
+                    break;
+
+                case "bool":
+                    sb.Append("            instance.").Append(prop.Name).AppendLine(" = reader.ReadBoolean();");
+                    break;
+
+                case "string":
+                    sb.Append("            int __len_").Append(prop.Name).AppendLine(" = reader.ReadInt32();");
+                    sb.Append("            if (__len_").Append(prop.Name).AppendLine(" == -1)");
+                    sb.AppendLine("            {");
+                    sb.Append("                instance.").Append(prop.Name).AppendLine(" = null;");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("            else");
+                    sb.AppendLine("            {");
+                    sb.Append("                byte[] __bytes_").Append(prop.Name).Append(" = reader.ReadBytes(__len_").Append(prop.Name).AppendLine(");");
+                    sb.Append("                instance.").Append(prop.Name).Append(" = System.Text.Encoding.UTF8.GetString(__bytes_").Append(prop.Name).AppendLine(");");
+                    sb.AppendLine("            }");
+                    break;
+
+                case "dateTime":
+                    // Опечатка исправлена: теперь имя переменной уникально и совпадает при объявлении и чтении
+                    sb.Append("            long __ticks_").Append(prop.Name).AppendLine(" = reader.ReadInt64();");
+                    sb.Append("            instance.").Append(prop.Name).Append(" = new DateTime(__ticks_").Append(prop.Name).AppendLine(");");
+                    break;
+
+                default:
+                    sb.Append("            // Unsupported type for reading: ").AppendLine(prop.TypeName);
+                    break;
+            }
+        }
+
+
     }
 }

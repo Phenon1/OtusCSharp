@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.3.11520.95
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OtusCSharpModels", "OtusCSharpHW3\OtusCSharpModels.csproj", "{DEBC9053-7F4D-43D9-8AF6-B2717AD67825}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{99CEB15E-1FA6-45D6-8783-111699E13E45}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HW6Client", "HW6Client\HW6Client.csproj", "{D3B12C35-AF10-A2D9-8FD3-1547AFDF49D6}"
@@ -17,16 +15,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PraktikumBenchmark", "Prakt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateBinarySerializer", "GenerateBinarySerializer\GenerateBinarySerializer.csproj", "{03E937E2-7B6A-4D76-8933-1F9B1828CBF2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OtusCSharpModels", "OtusCSharpModels\OtusCSharpModels.csproj", "{7E3CE082-18BD-CE42-B8C4-931BECD67C20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpSocketExtensions", "TcpSocketExtensions\TcpSocketExtensions.csproj", "{554DB5D0-AA07-47D1-82F1-D8E17AB6B404}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DEBC9053-7F4D-43D9-8AF6-B2717AD67825}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DEBC9053-7F4D-43D9-8AF6-B2717AD67825}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DEBC9053-7F4D-43D9-8AF6-B2717AD67825}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DEBC9053-7F4D-43D9-8AF6-B2717AD67825}.Release|Any CPU.Build.0 = Release|Any CPU
 		{99CEB15E-1FA6-45D6-8783-111699E13E45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{99CEB15E-1FA6-45D6-8783-111699E13E45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99CEB15E-1FA6-45D6-8783-111699E13E45}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -51,6 +49,14 @@ Global
 		{03E937E2-7B6A-4D76-8933-1F9B1828CBF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03E937E2-7B6A-4D76-8933-1F9B1828CBF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{03E937E2-7B6A-4D76-8933-1F9B1828CBF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E3CE082-18BD-CE42-B8C4-931BECD67C20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E3CE082-18BD-CE42-B8C4-931BECD67C20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E3CE082-18BD-CE42-B8C4-931BECD67C20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E3CE082-18BD-CE42-B8C4-931BECD67C20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{554DB5D0-AA07-47D1-82F1-D8E17AB6B404}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{554DB5D0-AA07-47D1-82F1-D8E17AB6B404}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{554DB5D0-AA07-47D1-82F1-D8E17AB6B404}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{554DB5D0-AA07-47D1-82F1-D8E17AB6B404}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

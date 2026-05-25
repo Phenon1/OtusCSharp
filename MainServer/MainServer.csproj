@@ -17,7 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HW6Client\HW6Client.csproj" />
-    <ProjectReference Include="..\OtusCSharpHW3\OtusCSharpModels.csproj" />
+    <ProjectReference Include="..\OtusCSharpModels\OtusCSharpModels.csproj" />
+    <ProjectReference Include="..\TcpSocketExtensions\TcpSocketExtensions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
