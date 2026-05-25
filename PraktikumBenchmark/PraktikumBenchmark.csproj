@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OtusCSharpHW3\OtusCSharpModels.csproj" />
+    <ProjectReference Include="..\OtusCSharpModels\OtusCSharpModels.csproj" />
   </ItemGroup>
 
 </Project>

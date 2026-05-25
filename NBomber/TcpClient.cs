@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using PhenonExtensions;
 
 namespace NBomberTest
 {
@@ -29,13 +30,16 @@ namespace NBomberTest
             await _lock.WaitAsync();
             try
             {
-                byte[] data = Encoding.UTF8.GetBytes(message);
+                byte[] data = Encoding.UTF8.GetBytes("SET " + message +" ");
                 byte[] combined = new byte[data.Length + value.Length];
                 Buffer.BlockCopy(data, 0, combined, 0, data.Length);
                 Buffer.BlockCopy(value, 0, combined, data.Length, value.Length);
-                
 
-                await _client.SendAsync(combined, SocketFlags.None);
+
+                byte[] length = BitConverter.GetBytes(combined.Length);
+
+                await _client.SendPacketWithLenAsync(combined);
+
                 await ReceiveAsync(_client);
             }
             finally
@@ -50,8 +54,9 @@ namespace NBomberTest
             try
             {
                 byte[] data = Encoding.UTF8.GetBytes("GET " + key);
-                await _client.SendAsync(data, SocketFlags.None);
-                return ReceiveAsync(_client).Result;
+
+                await _client.SendPacketWithLenAsync(data);
+                return await ReceiveAsync(_client);
             }
             finally
             {
@@ -64,11 +69,7 @@ namespace NBomberTest
             byte[] buffer = new byte[1024];
             try
             {
-                int received = await client.ReceiveAsync(buffer, SocketFlags.None);
-
-                string response = Encoding.UTF8.GetString(buffer, 0, received);
-                // Console.WriteLine($"Ответ сервера: {response}");
-                return buffer[..received];
+                return await client.ReceivePacketWithLenAsync();
 
             }
             catch (Exception ex)

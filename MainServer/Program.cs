@@ -31,7 +31,6 @@ namespace MainServer
                     .AddConsoleExporter()              
                     .Build();
 
-            // Создаем тестовый кастомный счетчик
             var counter = Telemetry.Meter.CreateCounter<long>("app.loops.count");
 
             

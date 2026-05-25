@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OtusCSharpHW3\OtusCSharpModels.csproj" />
+    <ProjectReference Include="..\OtusCSharpModels\OtusCSharpModels.csproj" />
   </ItemGroup>
 
 </Project>

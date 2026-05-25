@@ -36,23 +36,31 @@ namespace NBomber
 
                 var step1 = await Step.Run("GetBytes", context, async () =>
                 {
-                    var bytes = JsonSerializer.SerializeToUtf8Bytes(userProfile);
+                    byte[] bytesIn;
 
-                    using TcpBombClient client = new TcpBombClient();
-                    CancellationTokenSource tokenSource = new CancellationTokenSource();
+                    using (MemoryStream streamOut = new MemoryStream())
+                    {
+                        userProfile.SerializeToBinary(streamOut);
+                        using TcpBombClient client = new TcpBombClient();
+                        CancellationTokenSource tokenSource = new CancellationTokenSource();
 
-                    await client.ConnectAsync("127.0.0.1", 8888, tokenSource.Token);
-                    await client.SetAsync(name, bytes);
-                    bytes = await client.GetAsync(name);
-                    UserProfile? userProfileRet = JsonSerializer.Deserialize<UserProfile>(bytes);
+                        await client.ConnectAsync("127.0.0.1", 8888, tokenSource.Token);
+                        await client.SetAsync(name, streamOut.ToArray());
+                        bytesIn = await client.GetAsync(name);
+                    }
 
-                    if (userProfileRet != null && userProfile.Id == userProfileRet.Id)
-                        return Response.Ok();
-                    else
-                        return Response.Fail();
+
+                    using (MemoryStream streamIn = new MemoryStream(bytesIn))
+                    {
+                        UserProfile? userProfileRet = UserProfile.DeserializeFromBinary(streamIn);
+
+                        if (userProfileRet != null && userProfile.Id == userProfileRet.Id)
+                            return Response.Ok();
+                        else
+                            return Response.Fail();
+                    }
+
                 });
-
-            
 
                 return Response.Ok();
             })

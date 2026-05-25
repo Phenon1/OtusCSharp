@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Dia2Lib;
 using Newtonsoft.Json;
 using OtusCSharpModels;
 using System;
@@ -20,24 +21,27 @@ namespace PraktikumBenchmark
             new JsonSerializerSettings();
 
         [Benchmark(Baseline = true)]
-        public byte[] NewtonsoftJson()
+        public UserProfile NewtonsoftJson()
         {
             var json = JsonConvert.SerializeObject(_profile, _newtonsoftSettings);
-            return Encoding.UTF8.GetBytes(json);
+            return JsonConvert.DeserializeObject<UserProfile>(json)!;
         }
 
         [Benchmark]
-        public byte[] SystemTextJson()
+        public UserProfile SystemTextJson()
         {
-            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(_profile, _stjOptions);
+            var bytes = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(_profile, _stjOptions);
+            return System.Text.Json.JsonSerializer.Deserialize<UserProfile>(bytes)!;
         }
 
         [Benchmark]
-        public void SourceGenerator()
+        public UserProfile SourceGenerator()
         {
             using (var ms = new MemoryStream())
             {
                 _profile.SerializeToBinary(ms);
+                ms.Position = 0; 
+                return UserProfile.DeserializeFromBinary(ms);
             }
         }
     }

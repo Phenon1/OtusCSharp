@@ -1,5 +1,6 @@
 ﻿using HelloWorldGenerator;
 using System;
+using System.Text;
 using System.Text.Json;
 
 namespace OtusCSharpModels  
@@ -14,7 +15,7 @@ namespace OtusCSharpModels
             var message = HelloFromGenerator.GetMessage();
             SimpleStore simple = new SimpleStore();
             simple.Get("xz");
-            ReadOnlySpan<char> span = "GET user:1".AsSpan();
+            ReadOnlySpan<byte> span = Encoding.UTF8.GetBytes("GET user:1"); 
             var commandKeyValue = CommandParser.Parse(span);
 
             UserProfile userProfile = new UserProfile("asqqweq");

@@ -8,7 +8,7 @@ using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
+using PhenonExtensions;
 
 namespace MainServer
 {
@@ -73,12 +73,15 @@ namespace MainServer
 
         private async Task SendMessageWithEndLineAsync(string message, Socket socket)
         {
-            await socket.SendAsync(Encoding.UTF8.GetBytes(message+ "\r\n"));
+            byte[] payload = Encoding.UTF8.GetBytes(message + "\r\n");
+            await socket.SendPacketWithLenAsync(payload);
         }
         private async Task ProcessClientAsync(Socket client)
         {
             var pool = ArrayPool<byte>.Shared;
+
             byte[] buffer = pool.Rent(_maxSizeMessageByte);
+            byte[] headerBuffer = pool.Rent(4);
 
             string clientAddress = client.RemoteEndPoint?.ToString() ?? "unknown";
 
@@ -86,13 +89,15 @@ namespace MainServer
             {
                 while (true)
                 {
-                    int received = await client.ReceiveAsync(buffer, SocketFlags.None);
-                    var stopwatch = Stopwatch.StartNew();
+                    bool disconnected = await client.ReadExactAsync(headerBuffer, 4);
 
-                    if (received == 0) // клиент закрыл соединение
+                    if (disconnected) // клиент закрыл соединение
                         break;
 
-                    if (received >= _maxSizeMessageByte)
+                    int messageLength =
+                        BitConverter.ToInt32(headerBuffer, 0);
+
+                    if (messageLength > _maxSizeMessageByte)
                     {
                         string errorMessage = string.Format(ErrorTooLarge, _maxSizeMessageByte);
                         using (Activity? activity = GetErrorReceiveMessageActivity(clientAddress, errorMessage))
@@ -101,39 +106,44 @@ namespace MainServer
                             break;
                         }
                     }
-                       
 
+                    disconnected =
+                        await client.ReadExactAsync(buffer, messageLength);
 
-                    ReadOnlySpan<char> span = Encoding.UTF8.GetChars(buffer, 0, received);
-                    
+                    if (disconnected)
+                        break;
+
+                    var stopwatch = Stopwatch.StartNew();
+                    ReadOnlySpan<byte> span = buffer.AsSpan(0, messageLength);
+
                     CommandKeyValue command;
                     string commandName;
                     using (Activity? activity = GetReceiveMessageActivity(clientAddress))
                     {
                         command = CommandParser.Parse(span);
-                        command.Print();
-                        commandName = command.Command.ToString();
+                        //command.Print();
+                        commandName = Encoding.UTF8.GetString(command.Command);
                         activity?.SetTag("command.name", commandName);
                     }
 
                     switch (commandName.ToUpper())
                     {
                         case nameof(AvCommands.SET):
-                            _store.Set(command.Key.ToString(), JsonSerializer.Deserialize<UserProfile>(command.Value));
+                            _store.Set(Encoding.UTF8.GetString(command.Key), UserProfile.DeserializeFromBinary(command.Value));
                             await SendMessageWithEndLineAsync(OK, client);
                             break;
 
                         case nameof(AvCommands.GET):
-                            UserProfile? val = _store.Get(command.Key.ToString());
+                            UserProfile? val = _store.Get(Encoding.UTF8.GetString(command.Key));
 
                             if (val == null)
                                 await SendMessageWithEndLineAsync(Nil,client);
                             else
-                                await client.SendAsync(JsonSerializer.SerializeToUtf8Bytes(val));
+                                await client.SendPacketWithLenAsync(val.SerializeToBinary());
                             break;
 
                         case nameof(AvCommands.DELETE):
-                            _store.Delete(command.Key.ToString());
+                            _store.Delete(Encoding.UTF8.GetString(command.Key));
                             await SendMessageWithEndLineAsync(OK, client);
                             break;
 
