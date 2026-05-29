@@ -22,12 +22,12 @@ namespace OtusCSharpModels
         {
             return (_setCount, _getCount, _deleteCount);
         }
-        public void Set(string key, UserProfile? profile)
+        public void Set(string key, UserProfile profile)
         {
             _lock.EnterWriteLock();
             try
             {
-                _store[key] = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(profile);
+                _store[key] = profile.SerializeToBinary();
             }
             finally
             {
@@ -45,7 +45,7 @@ namespace OtusCSharpModels
                 if (value == null)
                     return null;
                 else
-                    return JsonSerializer.Deserialize<UserProfile>(value);
+                    return UserProfile.DeserializeFromBinary(value);
             }
             finally
             {
@@ -74,3 +74,5 @@ namespace OtusCSharpModels
     }
 
 }
+
+

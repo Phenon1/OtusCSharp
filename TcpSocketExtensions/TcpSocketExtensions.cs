@@ -6,7 +6,8 @@ namespace PhenonExtensions
     {
         public static async Task SendExactAsync(
             this Socket socket,
-            byte[] data)
+            byte[] data,
+            CancellationToken cancellationToken = default)
         {
             int total = 0;
 
@@ -15,7 +16,8 @@ namespace PhenonExtensions
                 int sent =
                     await socket.SendAsync(
                         data.AsMemory(total),
-                        SocketFlags.None);
+                        SocketFlags.None,
+                        cancellationToken);
 
                 if (sent == 0)
                     throw new Exception(
@@ -28,7 +30,8 @@ namespace PhenonExtensions
         public static async ValueTask<bool> ReadExactAsync(
             this Socket socket,
             byte[] buffer,
-            int size)
+            int size,
+            CancellationToken cancellationToken = default)
         {
             int total = 0;
 
@@ -37,7 +40,8 @@ namespace PhenonExtensions
                 int received =
                     await socket.ReceiveAsync(
                         buffer.AsMemory(total, size - total),
-                        SocketFlags.None);
+                        SocketFlags.None,
+                        cancellationToken);
 
                 if (received == 0)
                     return true;
@@ -50,21 +54,23 @@ namespace PhenonExtensions
 
         public static async Task SendPacketWithLenAsync(
             this Socket socket,
-            byte[] payload)
+            byte[] payload,
+            CancellationToken cancellationToken = default)
         {
             byte[] length =
                 BitConverter.GetBytes(payload.Length);
 
-            await socket.SendExactAsync(length);
-            await socket.SendExactAsync(payload);
+            await socket.SendExactAsync(length, cancellationToken);
+            await socket.SendExactAsync(payload, cancellationToken);
         }
 
         public static async Task<byte[]> ReceivePacketWithLenAsync(
-            this Socket socket)
+            this Socket socket,
+            CancellationToken cancellationToken = default)
         {
             byte[] header = new byte[4];
 
-            bool disconnected = await socket.ReadExactAsync(header, 4);
+            bool disconnected = await socket.ReadExactAsync(header, 4, cancellationToken);
 
             if (disconnected)
                 return [];
@@ -73,7 +79,7 @@ namespace PhenonExtensions
 
             byte[] payload = new byte[length];
 
-            disconnected = await socket.ReadExactAsync(payload, length);
+            disconnected = await socket.ReadExactAsync(payload, length, cancellationToken);
 
             if (disconnected)
                 return [];
@@ -82,3 +88,4 @@ namespace PhenonExtensions
         }
     }
 }
+

@@ -1,50 +1,49 @@
 ﻿using Microsoft.Extensions.Configuration;
 using OtusCSharpModels;
+using PhenonExtensions;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using PhenonExtensions;
 
 namespace MainServer
 {
-    public class TcpServer
+    public class TcpServer : IDisposable
     {
         private SimpleStore _store;
-        int _maxSizeMessageByte;
-        int _maxCountConnect;
-        SemaphoreSlim _semaphoreConnectCount;
+        private readonly int _maxSizeMessageByte;
+        private readonly int _maxCountConnect;
+        private readonly SemaphoreSlim _semaphoreConnectCount;
 
-        public TcpServer(SimpleStore store)
+        public TcpServer(SimpleStore store, IConfiguration config)
         {
             _store = store;
-            IConfiguration config = new ConfigurationBuilder()
-              .SetBasePath(Directory.GetCurrentDirectory())
-              .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-              .Build();
-
             _maxSizeMessageByte = config.GetValue<int>("IncomeMessageSettings:SizeByte");
             _maxCountConnect = config.GetValue<int>("IncomeMessageSettings:MaxCountConnect");
             _semaphoreConnectCount = new SemaphoreSlim(_maxCountConnect);
 
         }
 
-        private enum AvCommands
-        {
-            GET,SET,DELETE
-        }
+        private const string CommandGet = "GET";
+        private const string CommandSet = "SET";
+        private const string CommandDelete = "DELETE";
+        private const string CommandUnknown = "UNKNOWN";
 
-      
+        private static ReadOnlySpan<byte> GetCommandBytes => "GET"u8;
+        private static ReadOnlySpan<byte> SetCommandBytes => "SET"u8;
+        private static ReadOnlySpan<byte> DeleteCommandBytes => "DELETE"u8;
+
         const string OK = "OK";
         const string Nil = "(nil)";
         const string ErrorUnknownCommand = "-ERR Unknown command";
         const string ErrorTooLarge = "-ERR Command too long. Max {0} byte allowed.";
 
-        public async Task StartAsync(byte[] bAddress, int port)
+        public async Task StartAsync(byte[] bAddress, int port, CancellationToken cancellationToken = default)
         {
 
             IPAddress address = new IPAddress(bAddress);
@@ -56,27 +55,42 @@ namespace MainServer
 
             Console.WriteLine("Сервер запущен. Ожидание подключений...");
 
-            while (true)
+            try
             {
-                
-                await _semaphoreConnectCount.WaitAsync();
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    await _semaphoreConnectCount.WaitAsync(cancellationToken);
 
-                Socket client = await socket.AcceptAsync();
-                _ = Task.Run(() => ProcessClientAsync(client));
-                // получаем адрес клиента
-                Console.WriteLine($"Адрес подключенного клиента: {client.RemoteEndPoint}");
-                
-               
+                    Socket client;
+
+                    try
+                    {
+                        client = await socket.AcceptAsync(cancellationToken);
+                    }
+                    catch
+                    {
+                        _semaphoreConnectCount.Release();
+                        throw;
+                    }
+
+                    _ = ProcessClientAsync(client, cancellationToken);
+                    // получаем адрес клиента
+                    Console.WriteLine($"Адрес подключенного клиента: {client.RemoteEndPoint}");
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
             }
 
         }
 
-        private async Task SendMessageWithEndLineAsync(string message, Socket socket)
+        private async Task SendMessageWithEndLineAsync(string message, Socket socket, CancellationToken cancellationToken)
         {
             byte[] payload = Encoding.UTF8.GetBytes(message + "\r\n");
-            await socket.SendPacketWithLenAsync(payload);
+            await socket.SendPacketWithLenAsync(payload, cancellationToken);
         }
-        private async Task ProcessClientAsync(Socket client)
+
+        private async Task ProcessClientAsync(Socket client, CancellationToken cancellationToken)
         {
             var pool = ArrayPool<byte>.Shared;
 
@@ -87,9 +101,9 @@ namespace MainServer
 
             try
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    bool disconnected = await client.ReadExactAsync(headerBuffer, 4);
+                    bool disconnected = await client.ReadExactAsync(headerBuffer, 4, cancellationToken);
 
                     if (disconnected) // клиент закрыл соединение
                         break;
@@ -102,18 +116,18 @@ namespace MainServer
                         string errorMessage = string.Format(ErrorTooLarge, _maxSizeMessageByte);
                         using (Activity? activity = GetErrorReceiveMessageActivity(clientAddress, errorMessage))
                         {
-                            await SendMessageWithEndLineAsync(errorMessage, client);
+                            await SendMessageWithEndLineAsync(errorMessage, client, cancellationToken);
                             break;
                         }
                     }
 
                     disconnected =
-                        await client.ReadExactAsync(buffer, messageLength);
+                        await client.ReadExactAsync(buffer, messageLength, cancellationToken);
 
                     if (disconnected)
                         break;
 
-                    var stopwatch = Stopwatch.StartNew();
+                    long start = Stopwatch.GetTimestamp();
                     ReadOnlySpan<byte> span = buffer.AsSpan(0, messageLength);
 
                     CommandKeyValue command;
@@ -122,49 +136,50 @@ namespace MainServer
                     {
                         command = CommandParser.Parse(span);
                         //command.Print();
-                        commandName = Encoding.UTF8.GetString(command.Command);
+                        commandName = GetCommandName(command.Command);
                         activity?.SetTag("command.name", commandName);
                     }
 
-                    switch (commandName.ToUpper())
+                    switch (commandName)
                     {
-                        case nameof(AvCommands.SET):
+                        case CommandSet:
                             _store.Set(Encoding.UTF8.GetString(command.Key), UserProfile.DeserializeFromBinary(command.Value));
-                            await SendMessageWithEndLineAsync(OK, client);
+                            await SendMessageWithEndLineAsync(OK, client, cancellationToken);
                             break;
 
-                        case nameof(AvCommands.GET):
+                        case CommandGet:
                             UserProfile? val = _store.Get(Encoding.UTF8.GetString(command.Key));
 
                             if (val == null)
-                                await SendMessageWithEndLineAsync(Nil,client);
+                                await SendMessageWithEndLineAsync(Nil, client, cancellationToken);
                             else
-                                await client.SendPacketWithLenAsync(val.SerializeToBinary());
+                                await client.SendPacketWithLenAsync(val.SerializeToBinary(), cancellationToken);
                             break;
 
-                        case nameof(AvCommands.DELETE):
+                        case CommandDelete:
                             _store.Delete(Encoding.UTF8.GetString(command.Key));
-                            await SendMessageWithEndLineAsync(OK, client);
+                            await SendMessageWithEndLineAsync(OK, client, cancellationToken);
                             break;
 
                         default:
-                            await SendMessageWithEndLineAsync(ErrorUnknownCommand, client);
+                            await SendMessageWithEndLineAsync(ErrorUnknownCommand, client, cancellationToken);
                             break;
                     }
 
-                    stopwatch.Stop();
-
                     var tags = new KeyValuePair<string, object?>("command", commandName);
                     Telemetry.CommandCounter.Add(1, tags);
-                    Telemetry.CommandDurationHistogram.Record(stopwatch.Elapsed.TotalMilliseconds, tags);
+                    Telemetry.CommandDurationHistogram.Record(Stopwatch.GetElapsedTime(start).TotalMilliseconds, tags);
                 }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
             }
             catch (SocketException ex)
             {
                 string errorMessage = $"Socket error: {ex.Message}";
                 using (Activity? activity = GetErrorReceiveMessageActivity(clientAddress, errorMessage))
                 {
-                    await SendMessageWithEndLineAsync(errorMessage, client);
+                    await SendMessageWithEndLineAsync(errorMessage, client, cancellationToken);
                 }
 
             }
@@ -173,7 +188,7 @@ namespace MainServer
                 string errorMessage = $"Error: {ex}";
                 using (Activity? activity = GetErrorReceiveMessageActivity(clientAddress, errorMessage))
                 {
-                    await SendMessageWithEndLineAsync(errorMessage, client);
+                    await SendMessageWithEndLineAsync(errorMessage, client, cancellationToken);
                 }
             }
             finally
@@ -184,7 +199,41 @@ namespace MainServer
                 client.Close();
                 client.Dispose();
                 pool.Return(buffer);
+                pool.Return(headerBuffer);
             }
+        }
+
+        private static string GetCommandName(ReadOnlySpan<byte> command)
+        {
+            if (EqualsAsciiIgnoreCase(command, SetCommandBytes))
+                return CommandSet;
+
+            if (EqualsAsciiIgnoreCase(command, GetCommandBytes))
+                return CommandGet;
+
+            if (EqualsAsciiIgnoreCase(command, DeleteCommandBytes))
+                return CommandDelete;
+
+            return CommandUnknown;
+        }
+
+        private static bool EqualsAsciiIgnoreCase(ReadOnlySpan<byte> command, ReadOnlySpan<byte> expected)
+        {
+            if (command.Length != expected.Length)
+                return false;
+
+            for (int i = 0; i < command.Length; i++)
+            {
+                byte value = command[i];
+
+                if (value >= (byte)'a' && value <= (byte)'z')
+                    value -= (byte)('a' - 'A');
+
+                if (value != expected[i])
+                    return false;
+            }
+
+            return true;
         }
 
         private Activity? GetReceiveMessageActivity(string remoteEndPoint)
@@ -207,6 +256,12 @@ namespace MainServer
             activity?.SetTag("status", "error");
             activity?.SetTag("error.message", error);
             return activity;
+        }
+
+        public void Dispose()
+        {
+            _store.Dispose();
+            _semaphoreConnectCount.Dispose();
         }
     }
 }
