@@ -1,8 +1,9 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Extensions.Configuration;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System.Diagnostics;
 
 namespace MainServer
 {
@@ -33,11 +34,19 @@ namespace MainServer
 
             var counter = Telemetry.Meter.CreateCounter<long>("app.loops.count");
 
-            
 
-            TcpServer server = new TcpServer(new OtusCSharpModels.SimpleStore());
-            _ = server.StartAsync(new byte[] { 127, 0, 0, 1 }, 8888);
+            IConfiguration config = new ConfigurationBuilder()
+              .SetBasePath(Directory.GetCurrentDirectory())
+              .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+              .Build();
+
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            using TcpServer server = new TcpServer(new OtusCSharpModels.SimpleStore(), config);
+            Task serverTask = server.StartAsync(new byte[] { 127, 0, 0, 1 }, 8888, cts.Token);
+
             Console.ReadLine();
+            cts.Cancel();
+            serverTask.GetAwaiter().GetResult();
         }
     }
 }

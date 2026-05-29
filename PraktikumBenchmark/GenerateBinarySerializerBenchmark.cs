@@ -20,7 +20,7 @@ namespace PraktikumBenchmark
         private readonly JsonSerializerSettings _newtonsoftSettings =
             new JsonSerializerSettings();
 
-        [Benchmark(Baseline = true)]
+        [Benchmark]
         public UserProfile NewtonsoftJson()
         {
             var json = JsonConvert.SerializeObject(_profile, _newtonsoftSettings);
@@ -34,7 +34,7 @@ namespace PraktikumBenchmark
             return System.Text.Json.JsonSerializer.Deserialize<UserProfile>(bytes)!;
         }
 
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         public UserProfile SourceGenerator()
         {
             using (var ms = new MemoryStream())
