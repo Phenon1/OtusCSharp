@@ -15,7 +15,7 @@ namespace MainServer
 {
     public class TcpServer : IDisposable
     {
-        private SimpleStore _store;
+        private readonly SimpleStore _store;
         private readonly int _maxSizeMessageByte;
         private readonly int _maxCountConnect;
         private readonly SemaphoreSlim _semaphoreConnectCount;
@@ -260,7 +260,6 @@ namespace MainServer
 
         public void Dispose()
         {
-            _store.Dispose();
             _semaphoreConnectCount.Dispose();
         }
     }
