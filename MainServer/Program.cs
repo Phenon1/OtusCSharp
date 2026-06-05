@@ -3,6 +3,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OtusCSharpModels;
 using System.Diagnostics;
 
 namespace MainServer
@@ -41,7 +42,8 @@ namespace MainServer
               .Build();
 
             using CancellationTokenSource cts = new CancellationTokenSource();
-            using TcpServer server = new TcpServer(new OtusCSharpModels.SimpleStore(), config);
+            using SimpleStore store = new SimpleStore();
+            using TcpServer server = new TcpServer(store, config);
             Task serverTask = server.StartAsync(new byte[] { 127, 0, 0, 1 }, 8888, cts.Token);
 
             Console.ReadLine();
